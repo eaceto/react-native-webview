@@ -17,6 +17,7 @@ static NSTimer *keyboardTimer;
 static NSString *const MessageHandlerName = @"ReactNativeWebView";
 static NSURLCredential* clientAuthenticationCredential;
 static NSDictionary* customCertificatesForHost;
+static BOOL syncCookiesBackToHTTPCookieStorage = NO;
 
 // runtime trick to remove WKWebView keyboard default toolbar
 // see: http://stackoverflow.com/questions/19033292/ios-7-uiwebview-keyboard-issue/19042279#19042279
@@ -646,7 +647,11 @@ static NSDictionary* customCertificatesForHost;
 }
 
 + (void)setCustomCertificatesForHost:(nullable NSDictionary*)certificates {
-    customCertificatesForHost = certificates;
+  customCertificatesForHost = certificates;
+}
+
++ (void)syncCookiesWithHTTPCookieStorage:(BOOL)sync {
+  syncCookiesBackToHTTPCookieStorage = sync;
 }
 
 - (void)                    webView:(WKWebView *)webView
@@ -900,6 +905,21 @@ static NSDictionary* customCertificatesForHost;
   } else if (_onLoadingFinish) {
     _onLoadingFinish([self baseEvent]);
   }
+
+  if (syncCookiesBackToHTTPCookieStorage) {
+    if (@available(iOS 11.0, *)) {
+      dispatch_async(dispatch_get_main_queue(), ^(){
+          WKHTTPCookieStore *cookieStore = [[WKWebsiteDataStore defaultDataStore] httpCookieStore];
+          NSHTTPCookieStorage *cookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
+          [cookieStore getAllCookies:^(NSArray<NSHTTPCookie *> *allCookies) {
+              for (NSHTTPCookie* cookie in allCookies) {
+                  [cookieStorage setCookie:cookie];
+              }
+          }];
+      });
+    }
+  }
+  
 
   [self setBackgroundColor: _savedBackgroundColor];
 }
