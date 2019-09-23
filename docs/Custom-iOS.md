@@ -170,6 +170,18 @@ If you need to connect to a server which has a self signed certificate, or want 
 
 Multiple hosts can be added to the directionary, and only one certificate for a host is allowed. The verification will succeed if any of the certificates in the chain of the request matches the one defined for the request's host.
 
+### syncing cookies back to NSHTTPCookieStorage
+
+On iOS 11.0 react-native-webview uses WKWebView under the hood. This means that cookies sent in each response does not store in NSHTTPCookieStorage but inside WKWebView.
+
+You may use a WebView to authenticate into a stateful system, and then would like to make requests using fetch, axios, or any other library. Or even store the cookies inside the Keychain to keep the user authenticated the next time the app is opened.
+
+Enabling cookies synchronization from WKWebView to NSHTTPCookieStorage, let you access all the cookies received in every response, using a standard React Native library like **react-native-cookies**. In order to archivo this, synchronization must be enabled in the Application Delegate (disabled by default in order to keep the previous behavior). To do so, add the following lines in your *application:didFinishLaunchingWithOptions:*.
+
+```objc
+  [RNCWebView syncCookiesWithHTTPCookieStorage:YES];
+```
+
 
 ## JavaScript Interface
 
